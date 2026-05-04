@@ -1,0 +1,95 @@
+{
+  "name": "gum-jsx-vscode",
+  "displayName": "Gum JSX Preview",
+  "description": "Live preview for gum.jsx visualization files",
+  "version": "0.0.1",
+  "publisher": "compendiumlabs",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onWebviewPanel:gumJsx.preview"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "gumJsx.openPreview",
+        "title": "Open Preview",
+        "category": "Gum JSX",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "gumJsx.openPreviewToSide",
+        "title": "Open Preview to the Side",
+        "category": "Gum JSX",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "gumJsx.openPreviewToSide",
+        "key": "ctrl+k v",
+        "mac": "cmd+k v",
+        "when": "editorLangId == javascriptreact || editorLangId == typescriptreact || resourceExtname == .jsx"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "gumJsx.openPreviewToSide",
+          "when": "resourceExtname == .jsx",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "gumJsx.openPreview",
+          "when": "resourceExtname == .jsx",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Gum JSX Preview",
+      "properties": {
+        "gumJsx.bunPath": {
+          "type": "string",
+          "default": "bun",
+          "description": "Path to the bun executable used to run gum.jsx."
+        },
+        "gumJsx.theme": {
+          "type": "string",
+          "enum": ["light", "dark"],
+          "default": "light",
+          "description": "Theme passed to gum.jsx when rendering."
+        },
+        "gumJsx.refreshDelayMs": {
+          "type": "number",
+          "default": 250,
+          "minimum": 0,
+          "description": "Debounce delay (ms) before re-rendering on document changes."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "bun build ./src/extension.ts --target=node --external=vscode --outdir=out --format=cjs",
+    "watch": "bun build ./src/extension.ts --target=node --external=vscode --outdir=out --format=cjs --watch",
+    "vscode:prepublish": "bun run build"
+  },
+  "dependencies": {
+    "gum-jsx": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.9.0"
+  }
+}
