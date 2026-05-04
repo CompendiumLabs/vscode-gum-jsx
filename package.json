@@ -4,6 +4,10 @@
   "description": "Live preview for gum.jsx visualization files",
   "version": "0.0.1",
   "publisher": "compendiumlabs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/compendiumlabs/vscode-gum-jsx"
+  },
   "private": true,
   "license": "MIT",
   "engines": {
