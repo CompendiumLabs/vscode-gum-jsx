@@ -1,24 +1,22 @@
 {
   "name": "gum-jsx-vscode",
-  "displayName": "Gum JSX Preview",
-  "description": "Live preview for gum.jsx visualization files",
   "version": "0.0.1",
-  "publisher": "compendiumlabs",
   "repository": {
     "type": "git",
     "url": "https://github.com/compendiumlabs/vscode-gum-jsx"
   },
-  "license": "MIT",
-  "engines": {
-    "vscode": "^1.85.0"
+  "main": "./out/extension.js",
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.9.0"
   },
+  "activationEvents": [
+    "onWebviewPanel:gumJsx.preview"
+  ],
   "categories": [
     "Visualization",
     "Other"
-  ],
-  "main": "./out/extension.js",
-  "activationEvents": [
-    "onWebviewPanel:gumJsx.preview"
   ],
   "contributes": {
     "commands": [
@@ -82,17 +80,19 @@
       }
     }
   },
+  "description": "Live preview for gum.jsx visualization files",
+  "displayName": "Gum JSX Preview",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "license": "MIT",
+  "publisher": "compendiumlabs",
   "scripts": {
     "build": "bun build ./src/extension.ts --target=node --external=vscode --outdir=out --format=cjs",
     "watch": "bun build ./src/extension.ts --target=node --external=vscode --outdir=out --format=cjs --watch",
     "vscode:prepublish": "bun run build"
   },
   "dependencies": {
-    "gum-jsx": "*"
-  },
-  "devDependencies": {
-    "@types/node": "^22",
-    "@types/vscode": "^1.85.0",
-    "typescript": "^5.9.0"
+    "gum-jsx": "^1.5.1"
   }
 }

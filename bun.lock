@@ -5,7 +5,7 @@
     "": {
       "name": "gum-jsx-vscode",
       "dependencies": {
-        "gum-jsx": "*",
+        "gum-jsx": "^1.5.1",
       },
       "devDependencies": {
         "@types/node": "^22",
