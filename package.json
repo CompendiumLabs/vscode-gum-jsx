@@ -1,6 +1,7 @@
 {
   "name": "gum-jsx-vscode",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/compendiumlabs/vscode-gum-jsx"
@@ -8,7 +9,8 @@
   "main": "./out/extension.js",
   "devDependencies": {
     "@types/node": "^22.19.18",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "1.100.0",
+    "gum-jsx": "^1.6.2",
     "typescript": "^5.9.3"
   },
   "activationEvents": [
@@ -60,16 +62,17 @@
     "configuration": {
       "title": "Gum JSX Preview",
       "properties": {
-        "gumJsx.bunPath": {
-          "type": "string",
-          "default": "bun",
-          "description": "Path to the bun executable used to run gum.jsx."
-        },
         "gumJsx.theme": {
           "type": "string",
           "enum": ["light", "dark"],
           "default": "light",
           "description": "Theme passed to gum.jsx when rendering."
+        },
+        "gumJsx.renderTimeoutMs": {
+          "type": "number",
+          "default": 5000,
+          "minimum": 250,
+          "description": "Maximum time (ms) allowed for a gum.jsx render before stopping the worker."
         },
         "gumJsx.refreshDelayMs": {
           "type": "number",
@@ -83,16 +86,13 @@
   "description": "Live preview for gum.jsx visualization files",
   "displayName": "Gum JSX Preview",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.100.0"
   },
   "license": "MIT",
   "publisher": "compendiumlabs",
   "scripts": {
-    "build": "bun build ./src/extension.ts --target=node --external=vscode --outdir=out --format=cjs",
-    "watch": "bun build ./src/extension.ts --target=node --external=vscode --outdir=out --format=cjs --watch",
+    "build": "bun ./scripts/build.ts",
+    "watch": "bun ./scripts/build.ts --watch",
     "vscode:prepublish": "bun run build"
-  },
-  "dependencies": {
-    "gum-jsx": "^1.6.2"
   }
 }

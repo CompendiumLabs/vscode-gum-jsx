@@ -1,9 +1,18 @@
 import * as vscode from 'vscode';
-import { spawn } from 'node:child_process';
+import { Worker } from 'node:worker_threads';
 import * as path from 'node:path';
-import * as fs from 'node:fs';
 
 const VIEW_TYPE = 'gumJsx.preview';
+const WORKER_URL = new URL('./render-worker.js', import.meta.url);
+
+type RenderResult = {
+    promise: Promise<string>;
+    cancel: () => void;
+};
+
+type RenderWorkerMessage =
+    | { type: 'svg'; svg: string }
+    | { type: 'error'; message: string; stack?: string };
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
@@ -65,6 +74,8 @@ class GumPreviewPanel {
     private disposables: vscode.Disposable[] = [];
     private renderToken = 0;
     private debounceTimer: NodeJS.Timeout | null = null;
+    private activeRender: RenderResult | null = null;
+    private disposed = false;
 
     public static createOrShow(
         context: vscode.ExtensionContext,
@@ -170,69 +181,93 @@ class GumPreviewPanel {
         const cwd = path.dirname(this.document.uri.fsPath);
 
         try {
-            const svg = await this.runGum(code, cwd);
-            if (token !== this.renderToken) return;
+            this.activeRender?.cancel();
+            const render = this.createRender(code, cwd);
+            this.activeRender = render;
+            const svg = await render.promise;
+            if (this.disposed || token !== this.renderToken) return;
             this.panel.webview.postMessage({ type: 'svg', svg });
         } catch (err) {
-            if (token !== this.renderToken) return;
+            if (this.disposed || token !== this.renderToken) return;
             const message = err instanceof Error ? err.message : String(err);
             this.panel.webview.postMessage({ type: 'error', message });
+        } finally {
+            if (token === this.renderToken) this.activeRender = null;
         }
     }
 
-    private runGum(code: string, cwd: string): Promise<string> {
+    private createRender(code: string, cwd: string): RenderResult {
         const config = vscode.workspace.getConfiguration('gumJsx');
-        const bunPath = config.get<string>('bunPath') ?? 'bun';
         const theme = config.get<string>('theme') ?? 'light';
+        const timeoutMs = Math.max(config.get<number>('renderTimeoutMs') ?? 5000, 250);
 
-        const gumScript = this.findGumScript();
-        if (!gumScript) {
-            return Promise.reject(
-                new Error(
-                    'gum-jsx not found. Run `bun link gum-jsx` in the extension directory ' +
-                    '(after `bun link` in the gum.jsx repo).',
-                ),
-            );
-        }
+        const worker = new Worker(WORKER_URL, {
+            workerData: { code, cwd, theme },
+            resourceLimits: {
+                maxOldGenerationSizeMb: 256,
+            },
+        });
 
-        return new Promise((resolve, reject) => {
-            const args = [gumScript, '-f', 'svg', '-t', theme];
-            const child = spawn(bunPath, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+        let settled = false;
+        let timer: NodeJS.Timeout | null = null;
+        let rejectPromise: ((err: Error) => void) | null = null;
 
-            let stdout = '';
-            let stderr = '';
-            child.stdout.on('data', (d) => (stdout += d.toString()));
-            child.stderr.on('data', (d) => (stderr += d.toString()));
-            child.on('error', (err) => {
-                if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-                    reject(new Error(`Could not spawn '${bunPath}'. Set "gumJsx.bunPath" in settings.`));
+        const cleanup = () => {
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+        };
+
+        const promise = new Promise<string>((resolve, reject) => {
+            rejectPromise = reject;
+
+            timer = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                void worker.terminate();
+                reject(new Error(`gum.jsx render timed out after ${timeoutMs}ms`));
+            }, timeoutMs);
+
+            worker.once('message', (msg: RenderWorkerMessage) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                if (msg.type === 'svg') {
+                    resolve(msg.svg);
                 } else {
+                    const err = new Error(msg.message);
+                    if (msg.stack) err.stack = msg.stack;
                     reject(err);
                 }
             });
-            child.on('close', (exitCode) => {
-                if (exitCode === 0) resolve(stdout);
-                else reject(new Error(stderr.trim() || `gum exited with code ${exitCode}`));
+
+            worker.once('error', (err) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(err);
             });
 
-            child.stdin.write(code);
-            child.stdin.end();
+            worker.once('exit', (code) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(new Error(`gum.jsx render worker exited with code ${code}`));
+            });
         });
-    }
 
-    private findGumScript(): string | null {
-        const candidates = [
-            path.join(this.context.extensionPath, 'node_modules', 'gum-jsx', 'scripts', 'gum.ts'),
-        ];
-        for (const folder of vscode.workspace.workspaceFolders ?? []) {
-            candidates.push(
-                path.join(folder.uri.fsPath, 'node_modules', 'gum-jsx', 'scripts', 'gum.ts'),
-            );
-        }
-        for (const c of candidates) {
-            if (fs.existsSync(c)) return c;
-        }
-        return null;
+        return {
+            promise,
+            cancel: () => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                void worker.terminate();
+                rejectPromise?.(new Error('gum.jsx render canceled'));
+            },
+        };
     }
 
     private shellHtml(): string {
@@ -270,11 +305,14 @@ class GumPreviewPanel {
     }
 
     public dispose() {
+        this.disposed = true;
         GumPreviewPanel.panels.delete(this.document.uri.toString());
         if (this.debounceTimer) {
             clearTimeout(this.debounceTimer);
             this.debounceTimer = null;
         }
+        this.activeRender?.cancel();
+        this.activeRender = null;
         this.panel.dispose();
         while (this.disposables.length) {
             const d = this.disposables.pop();
