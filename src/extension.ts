@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Worker } from 'node:worker_threads';
 import * as path from 'node:path';
 
-const VIEW_TYPE = 'gumJsx.preview';
+const VIEW_TYPE = 'gumJsx.viewer';
 const WORKER_URL = new URL('./render-worker.js', import.meta.url);
 
 type RenderResult = {
@@ -16,21 +16,21 @@ type RenderWorkerMessage =
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        vscode.commands.registerCommand('gumJsx.openPreview', () => {
+        vscode.commands.registerCommand('gumJsx.openViewer', () => {
             const editor = vscode.window.activeTextEditor;
             if (!editor) {
                 vscode.window.showInformationMessage('Open a gum.jsx file first.');
                 return;
             }
-            GumPreviewPanel.createOrShow(context, editor.document, vscode.ViewColumn.Active);
+            GumViewerPanel.createOrShow(context, editor.document, vscode.ViewColumn.Active);
         }),
-        vscode.commands.registerCommand('gumJsx.openPreviewToSide', () => {
+        vscode.commands.registerCommand('gumJsx.openViewerToSide', () => {
             const editor = vscode.window.activeTextEditor;
             if (!editor) {
                 vscode.window.showInformationMessage('Open a gum.jsx file first.');
                 return;
             }
-            GumPreviewPanel.createOrShow(context, editor.document, vscode.ViewColumn.Beside);
+            GumViewerPanel.createOrShow(context, editor.document, vscode.ViewColumn.Beside);
         }),
     );
 
@@ -42,7 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
                 if (sourceUri) {
                     try {
                         const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(sourceUri));
-                        GumPreviewPanel.revive(context, webviewPanel, doc);
+                        GumViewerPanel.revive(context, webviewPanel, doc);
                         return;
                     } catch {
                         // fall through and dispose
@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    GumPreviewPanel.disposeAll();
+    GumViewerPanel.disposeAll();
 }
 
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
@@ -65,8 +65,8 @@ function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     };
 }
 
-class GumPreviewPanel {
-    private static panels = new Map<string, GumPreviewPanel>();
+class GumViewerPanel {
+    private static panels = new Map<string, GumViewerPanel>();
 
     private readonly panel: vscode.WebviewPanel;
     private readonly context: vscode.ExtensionContext;
@@ -83,7 +83,7 @@ class GumPreviewPanel {
         column: vscode.ViewColumn,
     ) {
         const key = document.uri.toString();
-        const existing = GumPreviewPanel.panels.get(key);
+        const existing = GumViewerPanel.panels.get(key);
         if (existing) {
             existing.panel.reveal(column, true);
             existing.scheduleRender(true);
@@ -92,13 +92,13 @@ class GumPreviewPanel {
 
         const panel = vscode.window.createWebviewPanel(
             VIEW_TYPE,
-            previewTitle(document),
+            viewerTitle(document),
             { viewColumn: column, preserveFocus: true },
             getWebviewOptions(context.extensionUri),
         );
 
-        const view = new GumPreviewPanel(context, panel, document);
-        GumPreviewPanel.panels.set(key, view);
+        const view = new GumViewerPanel(context, panel, document);
+        GumViewerPanel.panels.set(key, view);
     }
 
     public static revive(
@@ -106,15 +106,15 @@ class GumPreviewPanel {
         panel: vscode.WebviewPanel,
         document: vscode.TextDocument,
     ) {
-        const view = new GumPreviewPanel(context, panel, document);
-        GumPreviewPanel.panels.set(document.uri.toString(), view);
+        const view = new GumViewerPanel(context, panel, document);
+        GumViewerPanel.panels.set(document.uri.toString(), view);
     }
 
     public static disposeAll() {
-        for (const panel of GumPreviewPanel.panels.values()) {
+        for (const panel of GumViewerPanel.panels.values()) {
             panel.dispose();
         }
-        GumPreviewPanel.panels.clear();
+        GumViewerPanel.panels.clear();
     }
 
     private constructor(
@@ -126,7 +126,7 @@ class GumPreviewPanel {
         this.panel = panel;
         this.document = document;
 
-        this.panel.title = previewTitle(document);
+        this.panel.title = viewerTitle(document);
         this.panel.webview.html = this.shellHtml();
         this.scheduleRender(true);
 
@@ -274,10 +274,10 @@ class GumPreviewPanel {
         const webview = this.panel.webview;
         const nonce = makeNonce();
         const scriptUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this.context.extensionUri, 'media', 'preview.js'),
+            vscode.Uri.joinPath(this.context.extensionUri, 'media', 'view.js'),
         );
         const styleUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this.context.extensionUri, 'media', 'preview.css'),
+            vscode.Uri.joinPath(this.context.extensionUri, 'media', 'view.css'),
         );
         const csp = [
             `default-src 'none'`,
@@ -293,7 +293,7 @@ class GumPreviewPanel {
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="${csp}">
     <link href="${styleUri}" rel="stylesheet">
-    <title>Gum Preview</title>
+    <title>Gum Viewer</title>
 </head>
 <body>
     <div id="status" class="status">Rendering…</div>
@@ -306,7 +306,7 @@ class GumPreviewPanel {
 
     public dispose() {
         this.disposed = true;
-        GumPreviewPanel.panels.delete(this.document.uri.toString());
+        GumViewerPanel.panels.delete(this.document.uri.toString());
         if (this.debounceTimer) {
             clearTimeout(this.debounceTimer);
             this.debounceTimer = null;
@@ -321,8 +321,8 @@ class GumPreviewPanel {
     }
 }
 
-function previewTitle(document: vscode.TextDocument): string {
-    return `Preview: ${path.basename(document.uri.fsPath)}`;
+function viewerTitle(document: vscode.TextDocument): string {
+    return `Viewer: ${path.basename(document.uri.fsPath)}`;
 }
 
 function makeNonce(): string {

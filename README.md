@@ -1,23 +1,23 @@
-# Gum JSX Preview
+# Gum JSX Viewer
 
-Live preview for `.jsx` files written with [gum.jsx](https://github.com/CompendiumLabs/gum.jsx).
+Live viewer for `.jsx` files written with [gum.jsx](https://github.com/CompendiumLabs/gum.jsx).
 
 ## Features
 
-- Opens a rendered SVG preview beside the active editor.
-- Updates the preview as the document changes.
+- Opens a rendered SVG  beside the active editor.
+- Updates the output as the document changes.
 - Supports light and dark gum.jsx themes.
 - Runs gum.jsx evaluation in an isolated worker with a configurable timeout.
-- Supports `loadTable(...)` and `LoadImage` relative to the previewed file.
+- Supports `loadTable(...)` and `LoadImage` relative to the source file.
 
 ## Usage
 
 Open a gum.jsx `.jsx` file, then run one of these commands:
 
-- `Gum JSX: Open Preview`
-- `Gum JSX: Open Preview to the Side`
+- `Gum JSX: Open Viewer`
+- `Gum JSX: Open Viewer to the Side`
 
-The default keybinding for previewing to the side is:
+The default keybinding for viewing to the side is:
 
 - Windows/Linux: `Ctrl+K V`
 - macOS: `Cmd+K V`
@@ -32,7 +32,7 @@ The default keybinding for previewing to the side is:
 
 ## Workspace Trust
 
-This extension evaluates the active gum.jsx document in order to render the preview. For that reason, it only runs in trusted workspaces.
+This extension evaluates the active gum.jsx document. For that reason, it only runs in trusted workspaces.
 
 ## Requirements
 
@@ -41,5 +41,5 @@ This extension evaluates the active gum.jsx document in order to render the prev
 
 ## Known Limitations
 
-- The preview renders SVG only.
+- The viewer renders SVG only.
 - Long-running or infinite gum.jsx code is stopped by the render timeout.

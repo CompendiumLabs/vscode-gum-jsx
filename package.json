@@ -1,5 +1,5 @@
 {
-  "name": "gum-jsx-vscode",
+  "name": "gum-jsx-viewer",
   "version": "0.1.0",
   "type": "module",
   "repository": {
@@ -16,7 +16,7 @@
     "typescript": "^5.9.3"
   },
   "activationEvents": [
-    "onWebviewPanel:gumJsx.preview"
+    "onWebviewPanel:gumJsx.viewer"
   ],
   "categories": [
     "Visualization",
@@ -24,11 +24,7 @@
   ],
   "keywords": [
     "gum",
-    "gum.jsx",
-    "jsx",
-    "visualization",
-    "preview",
-    "svg"
+    "gum.jsx"
   ],
   "bugs": {
     "url": "https://github.com/compendiumlabs/vscode-gum-jsx/issues"
@@ -44,27 +40,27 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
-      "description": "Gum JSX Preview evaluates the active gum.jsx document to render the preview, so it requires a trusted workspace."
+      "description": "Gum JSX Viewer evaluates the active gum.jsx document, so it requires a trusted workspace."
     }
   },
   "contributes": {
     "commands": [
       {
-        "command": "gumJsx.openPreview",
-        "title": "Open Preview",
+        "command": "gumJsx.openViewer",
+        "title": "Open Viewer",
         "category": "Gum JSX",
-        "icon": "$(open-preview)"
+        "icon": "$(open-viewer)"
       },
       {
-        "command": "gumJsx.openPreviewToSide",
-        "title": "Open Preview to the Side",
+        "command": "gumJsx.openViewerToSide",
+        "title": "Open Viewer to the Side",
         "category": "Gum JSX",
-        "icon": "$(open-preview)"
+        "icon": "$(open-viewer)"
       }
     ],
     "keybindings": [
       {
-        "command": "gumJsx.openPreviewToSide",
+        "command": "gumJsx.openViewerToSide",
         "key": "ctrl+k v",
         "mac": "cmd+k v",
         "when": "editorLangId == javascriptreact || editorLangId == typescriptreact || resourceExtname == .jsx"
@@ -73,21 +69,21 @@
     "menus": {
       "editor/title": [
         {
-          "command": "gumJsx.openPreviewToSide",
+          "command": "gumJsx.openViewerToSide",
           "when": "resourceExtname == .jsx",
           "group": "navigation"
         }
       ],
       "explorer/context": [
         {
-          "command": "gumJsx.openPreview",
+          "command": "gumJsx.openViewer",
           "when": "resourceExtname == .jsx",
           "group": "navigation"
         }
       ]
     },
     "configuration": {
-      "title": "Gum JSX Preview",
+      "title": "Gum JSX Viewer",
       "properties": {
         "gumJsx.theme": {
           "type": "string",
@@ -110,8 +106,8 @@
       }
     }
   },
-  "description": "Live preview for gum.jsx visualization files",
-  "displayName": "Gum JSX Preview",
+  "description": "Live viewer for gum.jsx files",
+  "displayName": "Gum JSX Viewer",
   "engines": {
     "vscode": "^1.100.0"
   },
