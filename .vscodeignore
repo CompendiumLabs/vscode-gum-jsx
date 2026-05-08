@@ -5,6 +5,7 @@ examples
 tsconfig.json
 bun.lock
 *.vsix
+.gitignore
 .claude
 .codex
 .vscode
