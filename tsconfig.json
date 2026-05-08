@@ -9,6 +9,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "types": ["node"],
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "noEmit": true

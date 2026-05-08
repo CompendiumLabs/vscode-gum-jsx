@@ -8,6 +8,7 @@
   },
   "main": "./out/extension.js",
   "devDependencies": {
+    "@types/bun": "^1.3.13",
     "@types/node": "^22.19.18",
     "@types/vscode": "1.100.0",
     "gum-jsx": "^1.6.2",
@@ -93,6 +94,7 @@
   "scripts": {
     "build": "bun ./scripts/build.ts",
     "watch": "bun ./scripts/build.ts --watch",
+    "typecheck": "tsc --noEmit && tsc -p scripts/tsconfig.json",
     "vscode:prepublish": "bun run build"
   }
 }
