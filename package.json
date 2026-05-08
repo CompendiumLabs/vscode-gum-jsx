@@ -7,9 +7,9 @@
   },
   "main": "./out/extension.js",
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^22.19.18",
     "@types/vscode": "^1.85.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.3"
   },
   "activationEvents": [
     "onWebviewPanel:gumJsx.preview"
@@ -93,6 +93,6 @@
     "vscode:prepublish": "bun run build"
   },
   "dependencies": {
-    "gum-jsx": "^1.5.1"
+    "gum-jsx": "^1.6.2"
   }
 }
